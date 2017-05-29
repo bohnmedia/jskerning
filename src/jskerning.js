@@ -1,49 +1,51 @@
-var jskerning = function (domObj) {
+var jsKerning = function (domObj, options) {
 
     "use strict";
 
-    // KERNING-SETTINGS
-    var kerning = {
-        'Te': -0.15,
-        'To': -0.15
+    var kerning, parseTextNodes, modifyTextNode, setLetterSpacing;
+
+    // MODIFY TEXT NODE
+    modifyTextNode = function (node) {
+        var nextIndex, kern, i, index;
+		nextIndex = -1;
+		kern = 1;
+        for (i in options) {
+            if (typeof options[i] === "number") {
+                index = node.nodeValue.indexOf(i);
+                if (index !== -1 && (nextIndex === -1 || index < nextIndex)) {
+                    nextIndex = index;
+                    kern = options[i];
+                }
+            }
+        }
+		if (nextIndex !== -1) {
+			setLetterSpacing(node, nextIndex, kern);
+		}
     };
 
     // PARSE FOR TEXT-NODES AN CALL MODIFYTEXTNODE-FUNCTION
-    var parseTextNodes = function (node) {
-        if (node.nodeName == "#text") {
+    parseTextNodes = function (node) {
+        var i;
+        if (node.nodeName === "#text") {
             modifyTextNode(node);
         } else if (node.childNodes) {
-            for (var i = 0; i < node.childNodes.length; i++) {
+            for (i = 0; i < node.childNodes.length; i += 1) {
                 parseTextNodes(node.childNodes[i]);
             }
         }
     };
 
-    // MODIFY TEXT NODE
-    var modifyTextNode = function (node) {
-		var nextIndex = -1;
-		var kern = 1;
-        for (var i in kerning) {
-            var index = node.nodeValue.indexOf(i);
-            if ( index !== -1 && ( nextIndex == -1 || index < nextIndex ) ) {
-				nextIndex = index;
-				kern = kerning[i];
-            }
-        }
-		if ( nextIndex !== -1 ) {
-			setLetterSpacing(node, nextIndex, kern);
-		}
-    }
-
     // SET LETTER SPACING
-    var setLetterSpacing = function (node, index, kern) {
+    setLetterSpacing = function (node, index, kern) {
+        var firstPart, letter, endPart, span;
+
         // GET TEXT
-        var firstPart = node.nodeValue.substr(0, index);
-        var letter = node.nodeValue.substr(index, 1);
-        var endPart = node.nodeValue.substr(index + 1);
+        firstPart = node.nodeValue.substr(0, index);
+        letter = node.nodeValue.substr(index, 1);
+        endPart = node.nodeValue.substr(index + 1);
 
         // CREATE SPAN
-        var span = document.createElement('span');
+        span = document.createElement('span');
         span.appendChild(document.createTextNode(letter));
         span.style.letterSpacing = kern + "em";
         node.parentNode.insertBefore(span, node);
@@ -53,9 +55,9 @@ var jskerning = function (domObj) {
 
         // UPDATE TEXT NODE
         node.nodeValue = endPart;
-    }
+    };
 
     // GO
-    parseTextNodes(obj);
+    parseTextNodes(domObj);
 
-}
+};
